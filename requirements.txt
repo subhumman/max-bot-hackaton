@@ -1,0 +1,5 @@
+maxapi>=1.2.2
+aiosqlite>=0.22.1
+apscheduler>=3.11.3
+python-dotenv>=1.0.0
+dotenv>=0.9.9
