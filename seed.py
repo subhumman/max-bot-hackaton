@@ -1,8 +1,10 @@
-import asyncio, random
+import asyncio
+import random
 from datetime import date, timedelta
 import aiosqlite
 from config import DB_PATH
 from database import init_db, _status_from_replace
+
 
 TYPES = [
     {"type": "Счётчик ХВС", "models": ["Водоприбор-15", "Бетар СВК-15", "Itron S1"], "life": 12, "category": "water"},
@@ -23,6 +25,7 @@ ANALOGS = [
     ("Газовый котёл", "Baxi Eco Four 24", "24 кВт"),
 ]
 
+
 async def seed():
     await init_db()
     async with aiosqlite.connect(DB_PATH) as db:
@@ -30,23 +33,33 @@ async def seed():
             await db.execute(f"DELETE FROM {t}")
         await db.commit()
 
+        # 4 УК
         await db.executemany("INSERT INTO uk (name) VALUES (?)", [
-            ("УК Северная",), ("УК Центральная",), ("УК Заречная",),
+            ("УК Северная",),
+            ("УК Центральная",),
+            ("УК Заречная",),
+            ("УК Южная",),
         ])
+
+        # Дома С ГОРОДОМ
         await db.executemany(
-            "INSERT INTO buildings (uk_id, name, address) VALUES (?, ?, ?)",
+            "INSERT INTO buildings (uk_id, name, address, city) VALUES (?, ?, ?, ?)",
             [
-                (1, "ЖК Северный, корп. 1", "ул. Ленина, 15"),
-                (1, "ЖК Северный, корп. 3", "ул. Ленина, 17"),
-                (2, "ЖК Центральный, корп. А", "пр. Мира, 42"),
-                (3, "ЖК Заречный, корп. 2", "ул. Речная, 8"),
+                (1, "ЖК Северный, корп. 1", "ул. Ленина, 15", "Москва"),
+                (1, "ЖК Северный, корп. 3", "ул. Ленина, 17", "Москва"),
+                (2, "ЖК Центральный, корп. А", "пр. Мира, 42", "Москва"),
+                (3, "ЖК Заречный, корп. 2", "ул. Речная, 8", "Казань"),
+                (4, "ЖК Южный, корп. 1", "ул. Солнечная, 3", "Казань"),
+                (2, "ЖК Парковый", "ул. Садовая, 10", "Санкт-Петербург"),
+                (4, "ЖК Морской", "наб. Макарова, 5", "Санкт-Петербург"),
             ],
         )
 
+        # Устройства
         devices = []
         today = date.today()
-        for bld_id in (1, 2, 3, 4):
-            n = 40 if bld_id <= 2 else 12
+        for bld_id in range(1, 8):  # 7 домов
+            n = 35 if bld_id <= 3 else 12
             for i in range(n):
                 t = random.choice(TYPES)
                 r = random.random()
@@ -60,10 +73,17 @@ async def seed():
                 replace_at = installed + timedelta(days=t["life"] * 365)
                 status = _status_from_replace(replace_at)
                 devices.append((
-                    bld_id, t["category"], t["type"], random.choice(t["models"]),
+                    bld_id,
+                    t["category"],
+                    t["type"],
+                    random.choice(t["models"]),
                     f"{t['category'].upper()}-{bld_id}-{i+1:03d}",
-                    installed.isoformat(), t["life"], replace_at.isoformat(), status,
+                    installed.isoformat(),
+                    t["life"],
+                    replace_at.isoformat(),
+                    status,
                 ))
+
         await db.executemany(
             """INSERT INTO devices
                (building_id, category, type, model, serial, installed_at,
@@ -71,11 +91,15 @@ async def seed():
                VALUES (?,?,?,?,?,?,?,?,?)""",
             devices,
         )
+
         await db.executemany(
-            "INSERT INTO analogs (device_type, model, specs) VALUES (?,?,?)", ANALOGS
+            "INSERT INTO analogs (device_type, model, specs) VALUES (?,?,?)",
+            ANALOGS,
         )
         await db.commit()
-    print("✅ Сиды загружены")
+
+    print("✅ Сиды загружены (с городами)")
+
 
 if __name__ == "__main__":
     asyncio.run(seed())

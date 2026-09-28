@@ -32,6 +32,23 @@ async def daily_job(bot):
     logger.info("Daily job finished")
 
 def start_scheduler(bot) -> None:
-    scheduler.add_job(daily_job, "cron", hour=9, minute=0, args=[bot], id="daily_notify", replace_existing=True)
+    scheduler.add_job(
+        daily_job,
+        "cron",
+        hour=9,
+        minute=0,
+        args=[bot],
+        id="daily_notify",
+        replace_existing=True,
+    )
+    # === ТЕСТ: раз в 1 минуту ===
+    scheduler.add_job(
+        daily_job,
+        "interval",
+        minutes=1,
+        args=[bot],
+        id="test_notify",
+        replace_existing=True,
+    )
     scheduler.start()
-    logger.info("Scheduler started (09:00)")
+    logger.info("Scheduler started (daily 09:00 + test every 1 min)")

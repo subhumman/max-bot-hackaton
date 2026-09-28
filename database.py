@@ -5,6 +5,13 @@ from typing import Optional
 from config import DB_PATH
 
 SCHEMA = """
+CREATE TABLE IF NOT EXISTS buildings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    uk_id INTEGER NOT NULL REFERENCES uk(id),
+    name TEXT NOT NULL,
+    address TEXT,
+    city TEXT NOT NULL DEFAULT 'Москва'
+);
 CREATE TABLE IF NOT EXISTS uk (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL
@@ -108,11 +115,6 @@ async def list_uks() -> list[dict]:
         cur = await db.execute("SELECT * FROM uk ORDER BY id")
         return [dict(r) for r in await cur.fetchall()]
 
-async def list_buildings(uk_id: int) -> list[dict]:
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
-        cur = await db.execute("SELECT * FROM buildings WHERE uk_id = ? ORDER BY id", (uk_id,))
-        return [dict(r) for r in await cur.fetchall()]
 
 async def get_building(building_id: int) -> Optional[dict]:
     async with aiosqlite.connect(DB_PATH) as db:
@@ -233,3 +235,96 @@ CATEGORY_LABELS = {
     "boiler": "🏭 Котельная",
 }
 STATUS_EMOJI = {"ok": "🟢", "soon": "🟡", "overdue": "🔴"}
+
+async def list_cities() -> list[str]:
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute(
+            "SELECT DISTINCT city FROM buildings ORDER BY city"
+        )
+        rows = await cur.fetchall()
+        return [r[0] for r in rows]
+
+
+async def list_uks_by_city(city: str) -> list[dict]:
+    """УК, у которых есть дома в этом городе."""
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            """
+            SELECT DISTINCT u.id, u.name
+            FROM uk u
+            JOIN buildings b ON b.uk_id = u.id
+            WHERE b.city = ?
+            ORDER BY u.name
+            """,
+            (city,),
+        )
+        return [dict(r) for r in await cur.fetchall()]
+
+
+async def list_buildings(uk_id: int, city: str | None = None) -> list[dict]:
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        if city:
+            cur = await db.execute(
+                "SELECT * FROM buildings WHERE uk_id = ? AND city = ? ORDER BY id",
+                (uk_id, city),
+            )
+        else:
+            cur = await db.execute(
+                "SELECT * FROM buildings WHERE uk_id = ? ORDER BY id",
+                (uk_id,),
+            )
+        return [dict(r) for r in await cur.fetchall()]
+    
+async def set_user_role(max_user_id: int, role: str, uk_id: int | None = None) -> None:
+    async with aiosqlite.connect(DB_PATH) as db:
+        if uk_id is not None:
+            await db.execute(
+                "UPDATE users SET role = ?, uk_id = ? WHERE max_user_id = ?",
+                (role, uk_id, max_user_id),
+            )
+        else:
+            await db.execute(
+                "UPDATE users SET role = ? WHERE max_user_id = ?",
+                (role, max_user_id),
+            )
+        await db.commit()
+
+
+async def get_uk_summary(uk_id: int) -> dict:
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            """
+            SELECT d.status, COUNT(*) as cnt
+            FROM devices d
+            JOIN buildings b ON b.id = d.building_id
+            WHERE b.uk_id = ?
+            GROUP BY d.status
+            """,
+            (uk_id,),
+        )
+        result = {"overdue": 0, "soon": 0, "ok": 0}
+        for r in await cur.fetchall():
+            result[r["status"]] = r["cnt"]
+        return result
+
+
+async def list_critical_by_uk(uk_id: int, limit: int = 15) -> list[dict]:
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            """
+            SELECT d.*, b.name as building_name
+            FROM devices d
+            JOIN buildings b ON b.id = d.building_id
+            WHERE b.uk_id = ? AND d.status IN ('overdue', 'soon')
+            ORDER BY
+                CASE d.status WHEN 'overdue' THEN 0 ELSE 1 END,
+                d.replace_at
+            LIMIT ?
+            """,
+            (uk_id, limit),
+        )
+        return [dict(r) for r in await cur.fetchall()]

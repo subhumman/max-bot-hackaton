@@ -2,34 +2,59 @@ from maxapi.types import CallbackButton
 from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 from database import CATEGORY_LABELS, STATUS_EMOJI
 
-def uks_kb(uks: list[dict]) -> InlineKeyboardBuilder:
+
+def cities_kb(cities: list[str]) -> InlineKeyboardBuilder:
     kb = InlineKeyboardBuilder()
-    for u in uks:
-        kb.row(CallbackButton(text=u["name"], payload=f"uk:{u['id']}"))
+    for city in cities:
+        kb.row(CallbackButton(text=city, payload=f"city:{city}"))
     return kb
 
-def buildings_kb(buildings: list[dict]) -> InlineKeyboardBuilder:
+
+def uks_kb(uks: list[dict], city: str) -> InlineKeyboardBuilder:
+    kb = InlineKeyboardBuilder()
+    for u in uks:
+        kb.row(CallbackButton(text=u["name"], payload=f"uk:{u['id']}:{city}"))
+    kb.row(CallbackButton(text="◀ Назад к городам", payload="menu:cities"))
+    return kb
+
+
+def buildings_kb(buildings: list[dict], city: str, uk_id: int) -> InlineKeyboardBuilder:
     kb = InlineKeyboardBuilder()
     for b in buildings:
         kb.row(CallbackButton(text=b["name"], payload=f"bld:{b['id']}"))
-    kb.row(CallbackButton(text="◀ Назад к УК", payload="menu:uks"))
+    kb.row(CallbackButton(text="◀ Назад к УК", payload=f"city:{city}"))
     return kb
 
-def main_menu_kb() -> InlineKeyboardBuilder:
+
+def main_menu_kb(role: str = "owner") -> InlineKeyboardBuilder:
     kb = InlineKeyboardBuilder()
     kb.row(CallbackButton(text="📋 Список устройств", payload="menu:cats"))
     kb.row(CallbackButton(text="⚠️ Что скоро менять", payload="menu:soon"))
     kb.row(CallbackButton(text="🔔 Мои подписки", payload="menu:subs"))
-    kb.row(CallbackButton(text="⚙️ Сменить дом", payload="menu:uks"))
+    if role == "uk_admin":
+        kb.row(CallbackButton(text="📊 Сводка по УК", payload="menu:uk_summary"))
+    kb.row(CallbackButton(text="⚙️ Сменить дом", payload="menu:cities"))
     return kb
+
+
+def role_kb() -> InlineKeyboardBuilder:
+    kb = InlineKeyboardBuilder()
+    kb.row(CallbackButton(text="🏠 Я собственник", payload="role:owner"))
+    kb.row(CallbackButton(text="🏢 Я из УК (диспетчер)", payload="role:uk_admin_request"))
+    return kb
+
 
 def categories_kb(cats: list[dict]) -> InlineKeyboardBuilder:
     kb = InlineKeyboardBuilder()
     for c in cats:
         label = CATEGORY_LABELS.get(c["category"], c["category"])
-        kb.row(CallbackButton(text=f"{label} ({c['cnt']})", payload=f"cat:{c['category']}:1"))
+        kb.row(CallbackButton(
+            text=f"{label} ({c['cnt']})",
+            payload=f"cat:{c['category']}:1",
+        ))
     kb.row(CallbackButton(text="🏠 Меню", payload="menu:main"))
     return kb
+
 
 def devices_kb(devices: list[dict], category: str, page: int, total: int, per_page: int = 6) -> InlineKeyboardBuilder:
     kb = InlineKeyboardBuilder()
@@ -52,6 +77,7 @@ def devices_kb(devices: list[dict], category: str, page: int, total: int, per_pa
     kb.row(CallbackButton(text="🏠 Меню", payload="menu:main"))
     return kb
 
+
 def device_card_kb(device_id: int) -> InlineKeyboardBuilder:
     kb = InlineKeyboardBuilder()
     kb.row(
@@ -60,6 +86,7 @@ def device_card_kb(device_id: int) -> InlineKeyboardBuilder:
     )
     kb.row(CallbackButton(text="◀ Назад", payload="menu:cats"))
     return kb
+
 
 def notify_days_kb(device_id: int) -> InlineKeyboardBuilder:
     kb = InlineKeyboardBuilder()
@@ -71,6 +98,7 @@ def notify_days_kb(device_id: int) -> InlineKeyboardBuilder:
     kb.row(CallbackButton(text="Все (90+30+7)", payload=f"sub:{device_id}:all"))
     kb.row(CallbackButton(text="◀ К карточке", payload=f"dev:{device_id}"))
     return kb
+
 
 def soon_kb(devices: list[dict]) -> InlineKeyboardBuilder:
     kb = InlineKeyboardBuilder()
