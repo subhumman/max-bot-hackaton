@@ -85,14 +85,10 @@ Bashdocker compose up --build
 5. Параметры и переменные окружения
 Файл .env (или переменные в docker-compose.yml):
 MAX_BOT_TOKEN   Обязательная    Токен бота MAX  f9LHodD0cO...
-UK_ADMIN_PASSWORD   Обязательно     Пароль роли диспетчера УК   uk2026
-TZ      Не обязательно      Часовой пояс для cron       Europe/Moscow
 Пример .env:
 
 ```env
 MAX_BOT_TOKEN=ваш_токен_бота
-UK_ADMIN_PASSWORD=uk2026
-TZ=Europe/Moscow
 ```
 
 6. Используемые порты
