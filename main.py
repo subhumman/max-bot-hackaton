@@ -65,7 +65,7 @@ logger = logging.getLogger("bot")
 dp = Dispatcher()
 
 
-# ─── Старт ───────────────────────────────────────────────────────────────────
+# Старт
 
 @dp.bot_started()
 async def on_bot_started(event: BotStarted):
@@ -127,7 +127,7 @@ async def cmd_menu(event: MessageCreated):
     )
 
 
-# ─── Callback ────────────────────────────────────────────────────────────────
+# Колбеки
 
 @dp.message_callback()
 async def on_callback(event: MessageCallback):
@@ -150,7 +150,7 @@ async def on_callback(event: MessageCallback):
     logger.info("callback payload=%s user=%s", payload, user_id)
 
     try:
-        # ── Город → УК ──────────────────────────────────────────────
+        # Из города в ук
         if action == "city":
             city = ":".join(parts[1:])
             uks = await list_uks_by_city(city)
@@ -168,7 +168,7 @@ async def on_callback(event: MessageCallback):
                 )
             return
 
-        # ── УК → дома ───────────────────────────────────────────────
+        # Из ук в дом 
         if action == "uk":
             uk_id = int(parts[1])
             city = ":".join(parts[2:]) if len(parts) > 2 else None
@@ -195,7 +195,7 @@ async def on_callback(event: MessageCallback):
                 )
             return
 
-        # ── Дом выбран ──────────────────────────────────────────────
+        # дом выбран
         if action == "bld":
             bld = await get_building(int(parts[1]))
             if bld is None:
@@ -208,7 +208,7 @@ async def on_callback(event: MessageCallback):
             )
             return
 
-        # ── Выбор роли ──────────────────────────────────────────────
+        # выбор роли 
         if action == "role":
             role_action = parts[1]
 
@@ -238,20 +238,20 @@ async def on_callback(event: MessageCallback):
                 )
                 return
 
-        # ── Меню ────────────────────────────────────────────────────
+        # менюшка 
         if action == "menu":
             menu = parts[1] if len(parts) > 1 else "main"
             await _menu(event, user_id, menu)
             return
 
-        # ── Категория ───────────────────────────────────────────────
+        # категория ъ
         if action == "cat":
             category = parts[1]
             page = int(parts[2]) if len(parts) > 2 else 1
             await _cat(event, user_id, category, page)
             return
 
-        # ── Карточка устройства ─────────────────────────────────────
+        # карточка устройства 
         if action == "dev":
             d = await get_device(int(parts[1]))
             if d is None:
@@ -263,7 +263,7 @@ async def on_callback(event: MessageCallback):
             )
             return
 
-        # ── Аналоги ─────────────────────────────────────────────────
+        # аналоги 
         if action == "analog":
             device_id = int(parts[1])
             d = await get_device(device_id)
@@ -287,7 +287,7 @@ async def on_callback(event: MessageCallback):
             await event.edit(text=text, attachments=[kb.as_markup()])
             return
 
-        # ── Меню подписки ───────────────────────────────────────────
+        # меню подписки
         if action == "sub_menu":
             device_id = int(parts[1])
             await event.edit(
@@ -296,7 +296,7 @@ async def on_callback(event: MessageCallback):
             )
             return
 
-        # ── Подписка ────────────────────────────────────────────────
+        # сама подписка
         if action == "sub":
             device_id = int(parts[1])
             days = parts[2]
@@ -327,7 +327,7 @@ async def on_callback(event: MessageCallback):
         logger.exception(e)
         await event.answer(notification="Ошибка")
 
-# ─── Вспомогательные ─────────────────────────────────────────────────────────
+# вспомогательные функции
 
 async def _menu(event: MessageCallback, user_id: int, menu: str):
     if menu in ("cities", "uks"):
@@ -479,7 +479,7 @@ async def on_text(event: MessageCreated):
         return
 
     await event.message.answer("Используйте кнопки или команды /start /menu")
-# ─── Entry ───────────────────────────────────────────────────────────────────
+
 
 async def main():
     await init_db()

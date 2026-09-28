@@ -41,7 +41,7 @@ def start_scheduler(bot) -> None:
         id="daily_notify",
         replace_existing=True,
     )
-    # === ТЕСТ: раз в 1 минуту ===
+    # тест - раз в 1 минуту логи чекать надо на работоспособность подписки
     scheduler.add_job(
         daily_job,
         "interval",

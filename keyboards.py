@@ -3,6 +3,8 @@ from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 from database import CATEGORY_LABELS, STATUS_EMOJI
 
 
+# кнопочки
+
 def cities_kb(cities: list[str]) -> InlineKeyboardBuilder:
     kb = InlineKeyboardBuilder()
     for city in cities:

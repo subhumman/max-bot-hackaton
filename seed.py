@@ -41,7 +41,7 @@ async def seed():
             ("УК Южная",),
         ])
 
-        # Дома С ГОРОДОМ
+        # дома с городом
         await db.executemany(
             "INSERT INTO buildings (uk_id, name, address, city) VALUES (?, ?, ?, ?)",
             [

@@ -2,26 +2,26 @@ from datetime import date
 from database import STATUS_EMOJI, CATEGORY_LABELS
 
 def get_user_id(event) -> int | None:
-    # 1. Callback — самый частый случай после кнопок
+    # самый частый случай после кнопок
     if hasattr(event, "callback") and event.callback:
         user = getattr(event.callback, "user", None)
         if user is not None:
             uid = getattr(user, "user_id", None)
             if uid is not None:
                 return int(uid)
-    # 2. Message.sender
+    # Message.sender
     if hasattr(event, "message") and event.message:
         sender = getattr(event.message, "sender", None)
         if sender is not None:
             uid = getattr(sender, "user_id", None)
             if uid is not None:
                 return int(uid)
-    # 3. BotStarted / user
+    # bot startet - user
     if hasattr(event, "user") and event.user is not None:
         uid = getattr(event.user, "user_id", None)
         if uid is not None:
             return int(uid)
-    # 4. Запасной вариант — chat_id в личке часто = user_id
+    # 4. Запасной вариант 
     if getattr(event, "chat_id", None) is not None:
         return int(event.chat_id)
     return None
