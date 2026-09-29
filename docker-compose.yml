@@ -1,0 +1,11 @@
+services:
+  bot:
+    build: .
+    container_name: max_equipment_bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - TZ=Europe/Moscow
+    volumes:
+      - ./data:/app/data

@@ -1,7 +1,7 @@
 import asyncio
 import logging
-
-from config import UK_ADMIN_PASSWORD
+import os
+from config import UK_ADMIN_PASSWORD, BOT_TOKEN
 
 from maxapi import Bot, Dispatcher, F
 from maxapi.filters.command import CommandStart, Command
@@ -13,7 +13,9 @@ from maxapi.types import (
 )
 from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 
-BOT_TOKEN = "f9LHodD0cOLgvKhku0FDBFIifaz1ycD1XKRBTRt5TDdxrjgeff39sS8sv9RaLkbfGc74cQieBtyouZoo1IAK"
+if not BOT_TOKEN:
+    raise ValueError("MAX_BOT_TOKEN не задан. Проверь .env и docker-compose env_file")
+
 bot = Bot(token=BOT_TOKEN)
 
 from database import (
