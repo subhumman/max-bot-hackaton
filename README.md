@@ -1,7 +1,7 @@
 # MAX Equipment Bot
 
 Чат-бот учёта сроков службы инженерного оборудования в МКД на платформе MAX.
-
+(a95d9494475e5b51eaedea549a8bbec64a99fa6f - commit hash)
 **Бот в MAX:** https://max.ru/t315_hakaton_max_bot
 
 ---
